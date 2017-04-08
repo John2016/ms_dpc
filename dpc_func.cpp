@@ -61,7 +61,7 @@ double get_pdis_dotp(spectra &pt1, spectra &pt2)
 		int j;
         for (j = 0; j < count_1; ++j)
         {
-            if (abs(pt2.ions[i].mass_value - pt1.ions[j].mass_value) <= 0.5)
+            if (fabs(pt2.ions[i].mass_value - pt1.ions[j].mass_value) <= 0.5)
             {
                 union_pt2[j] = pt2.ions[i].intensity;
                 continue;
@@ -230,7 +230,7 @@ vector<int> decide_by_gap(vector<double> &delta, vector<double> &rho, int &clust
 }
 
 /* mean value and std value calculation, threshold = mean_gamma + std_gamma */
-vector<int> decide_multi_thres(vector<double> &delta, vector<double> &rho, int &cluster_num, int n_sample)
+vector<int> decide_multi_thres(vector<double> &delta, vector<double> &rho, vector<int> &upslope, int &cluster_num, int n_sample)
 {
     vector<int> decision(n_sample, -1);
     vector<decision_pair> decision_value;
@@ -263,7 +263,7 @@ vector<int> decide_multi_thres(vector<double> &delta, vector<double> &rho, int &
     int counter = 0;
     for (int i = 0; i < n_sample; ++i)
     {
-        if (decision_value[i].gamma > thres_gamma)
+        if (decision_value[i].gamma > thres_gamma || upslope[i] == -1)
         {
             decision[i] = counter;
             counter++;

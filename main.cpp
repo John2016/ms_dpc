@@ -13,10 +13,12 @@
  * modified: 2017.3.22
  * derived type in MPI
  */
+/*
+ * last modified: 20170408
+*/
 #include <fstream>
 #include <sstream>
 #include <iostream>
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -29,6 +31,8 @@
 #include <math.h>
 #include <algorithm>
 #include <map>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 // #include <unordered_map>
 
 #include "mpi.h"
@@ -41,10 +45,10 @@
 /* the whole program is based on mpi */
 int main(int argc, char** argv)
 {
+	MPI_Init(&argc,&argv);
 	double start_time = MPI_Wtime();
 	int myid,num_procs;
     MPI_Status status;
-    MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD,&num_procs);
     MPI_Comm_rank(MPI_COMM_WORLD,&myid);
     //  MPI_Get_processor_name(processor_name,&namelen);
@@ -94,6 +98,12 @@ int main(int argc, char** argv)
 		}
 		cout << "number of files: " << file_names.size() << endl;
 		cout << "number of procs: " << num_procs << endl;
+		/*
+		for (int i = 0; i < file_names.size(); ++i)
+		{
+			cout << file_names[i] << endl;
+		}
+		*/
 	}
 	int file_num = file_names.size();
 
@@ -143,19 +153,34 @@ int main(int argc, char** argv)
 			global_ms.load_data_file(file_names[i]);
 			// load_ms_data(global_ms, data_names, file_names[i]);
 		}
+		/*
+		cout << "example info about global_ms:\n";
+		cout << "\tdata_size: " << global_ms.data.size() << endl;
+		cout << "\tdata idxes: " << global_ms.data_idxes.size() << endl;
+		cout << "\tdata[0]" << global_ms.data[0].file_name << endl;
+		cout << "\tdata[0]" << global_ms.data[0].spectra_name << endl;
+		cout << "\tdata[0],size" << global_ms.data[0].ions.size() << endl;
+		cout << "\t\tions[0].precursor_mz" << global_ms.data[0].precursor_mz << endl;
+		cout << "\t\tions[0].charge" << global_ms.data[0].charge << endl;
+
+		cout << "\t\tions[0]" << global_ms.data[0].ions[0].mass_value << endl;
+		cout << "\t\tions[0]" << global_ms.data[0].ions[0].intensity << endl;
+		*/
 	}
 	else
 	{
+		/*
 		for (int i = begin_slave_idx; i < end_slave_idx; ++i)
 		{
 			global_ms.load_data_file(file_names[i]);
 			// load_ms_data(global_ms, data_names, file_names[i]);
 		}
+		*/
 	}
 	nsample_global = global_ms.data_size;
 	double after_loading_time = MPI_Wtime();
-	cout << "Time of loading data: " << after_loading_time - before_loading_time << "s" << endl;
-	cout << "Total number of data: " << nsample_global << endl;
+	cout << "proc " << myid << ": Time of loading data: " << after_loading_time - before_loading_time << "s" << endl;
+	cout << "proc " << myid << ": Total number of data: " << nsample_global << endl;
 
 	for (int i = 0; i < global_ms.data_size; i++)
 	{
@@ -163,10 +188,23 @@ int main(int argc, char** argv)
 		global_ms.data[i].normalize_spectra();
 	}
 	double after_preprocess_time = MPI_Wtime();
-	cout << "Time of data preprocessing: " << after_preprocess_time - after_loading_time << "s" << endl;
-	
+	cout <<  "proc " << myid << ": Time of data preprocessing: " << after_preprocess_time - after_loading_time << "s" << endl;
+	if (myid == 0)
+	 {
+	 	/*
+	 	cout << "example info about global_ms after preprocess:\n";
+		cout << "\tdata_size: " << global_ms.data.size() << endl;
+		cout << "\tdata idxes: " << global_ms.data_idxes.size() << endl;
+		cout << "\tdata[0]" << global_ms.data[0].file_name << endl;
+		cout << "\tdata[0]" << global_ms.data[0].spectra_name << endl;
+		cout << "\tdata[0],size" << global_ms.data[0].ions.size() << endl;
+		cout << "\t\tions[2]" << global_ms.data[0].ions[2].mass_value << endl;
+		cout << "\t\tions[2]" << global_ms.data[0].ions[2].intensity << endl;
+	 	*/
+	 } 
+
 	MPI_Bcast(&nsample_global, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	
+	// cout << "bcast done!" << endl;
 	/* dc estimation should be put here, maybe parallely */
 	// dc = getdc_reservoir(vector< > &data)
 	// MPI_Bcast(&dc, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -226,7 +264,7 @@ int main(int argc, char** argv)
 		hhm_ms = partition_heuristic(global_ms.data);
 
 		cout << "hash table analysis done!\n";
-		cout << "hash table size: " << endl;
+		cout << "hash table size: " << hhm_ms.size() << endl;
 		/*
 		for (int i = 0; i < m_groups; ++i)
 		{
@@ -238,14 +276,22 @@ int main(int argc, char** argv)
 
 		// allocate assignments
 		vector<dict_idx> assign_distri = trans_table_dict(hhm_ms);
+		// cout << "after trans_table_dict, assign_distri size: " << assign_distri.size() << endl;
 		ms_assign = alloc_assign_full(assign_distri, num_procs - 1);
+		// cout << "after alloc_assign_full, ms_assign size: " << ms_assign.size() << endl;
+		// cout << "data size of every node: " << ms_assign[0].multi_datasets.size() << " & " << ms_assign[1].multi_datasets.size() << endl;
+
+		/* æ³¨æ„ï¼Œè¿™ä¸€æ­¥ç»“æŸåï¼Œæ•°æ®å°šæœªå¡«å…… */
 		for (size_t i = 0; i < ms_assign.size(); i++)
 		{
+			ms_assign[i].fullfill_data(global_ms);
 			ms_assign[i].generate_idxf();
 		}
 		double after_assign_time = MPI_Wtime();
 		cout << "Time of assignment planing: " << after_assign_time - after_preprocess_time << "s" << endl;
-
+		// cout << "verify the result of fullfill: " << ms_assign[1].multi_datasets[0].data.size() << " & " << ms_assign[1].multi_datasets[0].data[0].ions.size() << endl;
+		// cout << "file name: " << ms_assign[1].multi_datasets[0].data[0].file_name << endl;
+		// cout << "spectra name: " << ms_assign[1].multi_datasets[0].data[0].spectra_name << endl;
 		// vector<vector<int> > idx_in_distri(num_procs, vector<int>());
 		// get_paras_distri(assign_distri, idx_in_distri);
 		// int count_assign = assign_distri.size();
@@ -254,11 +300,21 @@ int main(int argc, char** argv)
 		{
 			// 6vector<ms_dataset> assign_data; 
 			// fullfill the data set, ms_assign[i]
-			string assign_str = encode_assign(ms_assign[i]);
-			cout << "proc " << i << ": assign size is " << assign_str.size() << endl;
-			MPI_Send(assign_str.c_str(), assign_str.size(),MPI_CHAR, i, i, MPI_COMM_WORLD);
+			// cout << i << endl;
+			// cout << "\t" << ms_assign[i].multi_datasets[0].data.size() << " & " << ms_assign[i].multi_datasets[0].data[0].ions.size() << endl;
+			string assign_str = encode_assign(&ms_assign[i]);
+			cout << "\tproc " << i << ": assign size is " << assign_str.size() << endl;
+			//cout << "proc 0, verify, 430-450 values: " << endl;
+			/*
+			for (int j = 429; j < 450; ++j)
+			{
+				cout << int(assign_str.at(j)) << " & " ;
+			}
+			*/
+			MPI_Send(assign_str.c_str(), assign_str.size(), MPI_CHAR, i, i, MPI_COMM_WORLD);
+			// cout << "after send" << endl;
 			// MPI_Send(ms_assign[i].multi_datasets, 1, i, i, MPI_COMM_WORLD);
-			/* ÕâÀï£¬ms_assign[i]°üº¬Ò»¸öms_datasetÊı×éºÍÒ»¸öÍêÕûµÄË÷ÒıÏòÁ¿£¬µ«Ä¿Ç°ms_dataset½ö°üº¬Ë÷ÒıÃ»ÓĞÊı¾İ */
+			/* Ã•Ã¢Ã€Ã¯Â£Â¬ms_assign[i]Â°Ã¼ÂºÂ¬Ã’Â»Â¸Ã¶ms_datasetÃŠÃ½Ã—Ã©ÂºÃÃ’Â»Â¸Ã¶ÃÃªÃ•Ã»ÂµÃ„Ã‹Ã·Ã’Ã½ÃÃ²ÃÂ¿Â£Â¬ÂµÂ«Ã„Â¿Ã‡Â°ms_datasetÂ½Ã¶Â°Ã¼ÂºÂ¬Ã‹Ã·Ã’Ã½ÃƒÂ»Ã“ÃÃŠÃ½Â¾Ã */
 		}
 		double after_distribute_time = MPI_Wtime();
 		cout << "Time of distribution and data translation: " << after_distribute_time - after_assign_time << "s" << endl;
@@ -269,23 +325,32 @@ int main(int argc, char** argv)
 	vector<double> rho_final(nsample_global, 0.0);
 	if (myid > 0)
 	{
+		// cout << "in proc 1" << endl;
 		double time_before_receive = MPI_Wtime();
 		int assign_length;
 		MPI_Probe(0, myid, MPI_COMM_WORLD, &status);
 		MPI_Get_count(&status, MPI_CHAR, &assign_length);
-		char assign_str[assign_length];
+		// cout << "proc 1, after probe, assign_length is: " << assign_length << endl;
+		// char assign_str[assign_length+1];
+		char * assign_str = (char*)malloc(assign_length * sizeof(char));
+		// cout << "after initialize" << endl;
 		MPI_Recv(assign_str, assign_length, MPI_CHAR, 0, myid, MPI_COMM_WORLD, &status);
-		dict_full data_tmp = decode_assign(string(assign_str));
+		// cout << "after recv" << endl;
+		// cout << strlen(assign_str) << endl; 
+		// cout << "before decode, strlen: " << string(assign_str).length() << endl;
+		dict_full data_tmp = decode_assign(string(assign_str, assign_length));
+		free(assign_str);
 		for (size_t i = 0; i < data_tmp.multi_datasets.size(); i++)
 		{
 			data_local.push_back(data_tmp.multi_datasets[i]);
 		}
 		cout << "proc " << myid << " has collected all data assigned to it! " << endl;
+		// cout << "proc 1 verify: " << data_local.size() << " & " << data_local[0].data.size() << " & " << data_local[0].data[0].ions.size() << endl;
 		double time_after_receive = MPI_Wtime();
 		cout << "Time of data receiving on proc " << myid << " is " << time_after_receive - time_before_receive << "s" << endl;
 
 		// vector<report_rho> rho_sendback;
-		/* ÓÉÓÚ¶¨ÒåÁËdict_fullÕâ¸ö¸´ÔÓÀà£¬ÕâÀï¿ÉÒÔÖ±½Ó»Ø´«vector */
+		/* Ã“Ã‰Ã“ÃšÂ¶Â¨Ã’Ã¥ÃÃ‹dict_fullÃ•Ã¢Â¸Ã¶Â¸Â´Ã”Ã“Ã€Ã Â£Â¬Ã•Ã¢Ã€Ã¯Â¿Ã‰Ã’Ã”Ã–Â±Â½Ã“Â»Ã˜Â´Â«vector */
 		vector<double> rho_sendback;
 		for (int i = 0; i < data_local.size(); ++i)
 		{
@@ -309,15 +374,15 @@ int main(int argc, char** argv)
 		/* recv the rho value from slave nodes and merge all rho */
 		/* two key variables */
 		// vector<double> rho_mat;		// n_sample * m_groups
-		/* ÀíÂÛÉÏ£¬Ã¿Ò»¸öÊı¾İµãµÄrhoÖµ¶¼»á³öÏÖk´Î£¬kÊÇÑ¡¶¨µÄ×î¸ßµÄ¼¸¸ö·åµÄ¸öÊı */
-		/* ÆäÊµÕâ¸öÒ²Í¬ÑùÊÊºÏm_group£¬ÒòÎªÎÒÃÇµÄ²Ù×÷Ö»ÊÇÒªÇó×î´óÖµ£¬ÊÇ·ñ¶ÔÆë²»ÖØÒª */
+		/* Ã€Ã­Ã‚Ã›Ã‰ÃÂ£Â¬ÃƒÂ¿Ã’Â»Â¸Ã¶ÃŠÃ½Â¾ÃÂµÃ£ÂµÃ„rhoÃ–ÂµÂ¶Â¼Â»Ã¡Â³Ã¶ÃÃ–kÂ´ÃÂ£Â¬kÃŠÃ‡Ã‘Â¡Â¶Â¨ÂµÃ„Ã—Ã®Â¸ÃŸÂµÃ„Â¼Â¸Â¸Ã¶Â·Ã¥ÂµÃ„Â¸Ã¶ÃŠÃ½ */
+		/* Ã†Ã¤ÃŠÂµÃ•Ã¢Â¸Ã¶Ã’Â²ÃÂ¬Ã‘Ã¹ÃŠÃŠÂºÃm_groupÂ£Â¬Ã’Ã²ÃÂªÃÃ’ÃƒÃ‡ÂµÃ„Â²Ã™Ã—Ã·Ã–Â»ÃŠÃ‡Ã’ÂªÃ‡Ã³Ã—Ã®Â´Ã³Ã–ÂµÂ£Â¬ÃŠÃ‡Â·Ã±Â¶Ã”Ã†Ã«Â²Â»Ã–Ã˜Ã’Âª */
 		// vector<double> rho_final(nsample_global, 0.0);
 		double time_before_rho = MPI_Wtime();
 		for (int i = 1; i < num_procs; ++i)
 		{
 			vector<int> idx_tmp = ms_assign[i].idx_full;
 			int sendback_length = idx_tmp.size();
-
+			// cout << "sendback_length: " << sendback_length << endl;
 			vector<double> rho_tmp(sendback_length, -1);
 			
 			MPI_Recv(rho_tmp.data(), sendback_length, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status);
@@ -327,6 +392,7 @@ int main(int argc, char** argv)
 			{
 				if (rho_tmp[j] > rho_final[idx_tmp[j]])
 				{
+					// cout << "larger rho, " << j << endl;
 					rho_final[idx_tmp[j]] = rho_tmp[j];
 				}
 				/*
@@ -341,6 +407,7 @@ int main(int argc, char** argv)
 		}
 		double time_after_rho = MPI_Wtime();
 		cout << "Time of rho collection and merging on master proc is: " << time_after_rho - time_before_rho << "s" << endl;
+		// cout << "max rho: " << rho_final.size() << endl;
 
 
 		/* after we recv all rho data, merge them by the "max-rho" principles */
@@ -364,7 +431,7 @@ int main(int argc, char** argv)
 	}
 	
 	/* delta calculation */
-	vector<double> delta_final(nsample_global, 10);			// global maximum value should be assigned
+	vector<double> delta_final(nsample_global, 2);			// global maximum value should be assigned
 	vector<int> upslope_final(nsample_global, -1);
 	if (myid == 0)
 	{
@@ -387,6 +454,7 @@ int main(int argc, char** argv)
 			{
 				if (delta_tmp[j] < delta_final[idx_tmp[j]])
 				{
+					// cout << "less delta: " << j << endl;
 					delta_final[idx_tmp[j]] = delta_tmp[j];
 					upslope_final[idx_tmp[j]] = upslope_tmp[j];
 				}
@@ -461,11 +529,11 @@ int main(int argc, char** argv)
 		ofstream out(OUTPUT_NAME);
 		if(out.is_open()){
 			cout<<"Prepare to write the result ... ... "<<endl;
-			out << "file_name,spectra_name,cluster" << endl;
+			out << "file_name,spectra_name,cluster,rho,delta" << endl;
 			for (int i = 0; i < global_ms.data.size()	; ++i)
 			{
 				// out<< i << endl;
-				out << global_ms.data[i].file_name << "," << global_ms.data[i].spectra_name << "," << global_ms.decision[i] << endl;
+				out << global_ms.data[i].file_name << "," << global_ms.data[i].spectra_name << "," << global_ms.decision[i] << rho_final[i] << delta_final[i] << endl;
 			}
 			out.close();
 		}

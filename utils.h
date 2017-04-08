@@ -11,8 +11,8 @@ using namespace std;
 void printdir(char * dir, vector<string> &file_names, char * ancestor_dir, char * file_type);
 
 /* data translation of assignments related */
-string encode_assign(dict_full assign_node);
-
+//string encode_assign(dict_full assign_node);
+string encode_assign(const dict_full * assign_node);
 dict_full decode_assign(string assign_str);
 
 /* LSH related */

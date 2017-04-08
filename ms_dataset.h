@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include "spectra.h"
 #include "graph.h"
 
@@ -10,12 +11,14 @@ public:
 	// if num is not avaliable, would be set to 0
 	ms_dataset()
 	{
+		data_size = 0;
 		cluster_num = 0;
 	}
 
 	ms_dataset(vector<int> idx_o)
 	{
 		data_idxes = idx_o;
+		data_size = idx_o.size();
 		cluster_num = 0;
 	}
 
@@ -28,7 +31,7 @@ public:
 
 	~ms_dataset()		// delete operation
 	{
-
+		// cout << "free this ms_dataset" << endl;
   	}
 
 	void load_data_file(string file_names);
@@ -53,6 +56,22 @@ public:
 	void assign_cluster();
 
 	void get_halo();
+	/* to verify items in this obj is right */
+	bool verify_this();
+
+	void filldata_by_idx(const ms_dataset& global_ds);
+
+	ms_dataset(const ms_dataset& md)
+	{
+		this->data_idxes = md.data_idxes;
+		this->data_size = md.data_size;
+		this->cluster_num = 0;
+		//cout << "in copy constructor" << endl;
+		if (md.data.size() != 0)
+		{
+			this->data = md.data;
+		}
+	}
 	
 public:
 	// location in the global hash table
@@ -77,4 +96,14 @@ public:
 
 	int cluster_num;
 	vector<int> decision;
+
+private:
+	/*
+	friend std::ostream& operator& operator<< (std::ostream& os, const ms_dataset& md)
+	{
+		os << "data size: " << md.data_size < endl;
+		// os << "data example: " << md.data[0] << endl;
+		return os;
+	}
+	*/
 };

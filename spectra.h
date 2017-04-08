@@ -23,6 +23,12 @@ public:
 		intensity = out_inten;
 	}
 
+	peak(const peak& pk)
+	{
+		this->mass_value = pk.mass_value;
+		this->intensity = pk.intensity;
+	}
+
 	~peak()
 	{
 
@@ -53,6 +59,17 @@ public:
 		precursor_mz = mz;
 		charge = charge_o;
 		ions = ions_o;
+	}
+
+	spectra(const spectra& spe)
+	{
+		this->file_name = spe.file_name;
+		this->spectra_name = spe.spectra_name;
+
+		this->precursor_mz = spe.precursor_mz;
+		this->charge = spe.charge;
+
+	 	this->ions = spe.ions;
 	}
 
 	~spectra()

@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <string.h>
+#include <stdio.h>
 #include <math.h>
 
 #include "dpc_func.h"
@@ -14,91 +15,93 @@ using namespace std;
 /* load data from disk through file name */
 void ms_dataset::load_data_file(string file_names)
 {
-	// int num_file = file_names.size();
-	// for (int i = 0; i < num_file; ++i)
-	//{
-		char FILE_NAME[128];
-		int j;
-		for (j = 0; j < file_names.length(); j++)
-		{
-			FILE_NAME[j] = file_names.at(j);
-		}
-		FILE_NAME[j] = '\0';
+	
+	cout << "reading file ... " << file_names << endl;
+	char FILE_NAME[128];
+	int j;
+	for (j = 0; j < file_names.length(); j++)
+	{
+		FILE_NAME[j] = file_names.at(j);
+	}
+	FILE_NAME[j] = '\0';
+	
+	ifstream in(FILE_NAME);
+	if(! in.is_open()){
+		cout << "Error opening file " << FILE_NAME << endl; 
+		exit(1); 
+	}	
+
+	int spectra_num = 0;
+	string file_name_current(file_names);
+	char line_buff[120];
+
+	string spectra_name;
+	double precursor_mz;
+	int charge;
+	vector<peak> ions_tmp;
+
+	while( !in.eof() )
+	{
+		/*
+		BEGIN IONS
+		TITLE=TCGA-AA-3715-01A-22_W_VU_20120821_A0218_2E_R_FR01.7.7.2
+		RTINSECONDS=907.0923
+		PEPMASS=604.794006347656 616.510498046875
+		CHARGE=2+
+		193.8873444 3.6720590591
+		END IONS
+		*/
+		in.getline (line_buff, 120);
 		
-		ifstream in(FILE_NAME);
-		if(! in.is_open()){
-			cout << "Error opening file " << FILE_NAME << endl; 
-			exit(1); 
-		}	
-
-		int spectra_num = 0;
-		string file_name_current(file_names);
-		char line_buff[120];
-
-		string spectra_name;
-		double precursor_mz;
-		int charge;
-		vector<peak> ions_tmp;
-
-		while( !in.eof() )
+		if (strstr(line_buff,"BEGIN IONS") != NULL)
 		{
-			/*
-			BEGIN IONS
-			TITLE=TCGA-AA-3715-01A-22_W_VU_20120821_A0218_2E_R_FR01.7.7.2
-			RTINSECONDS=907.0923
-			PEPMASS=604.794006347656 616.510498046875
-			CHARGE=2+
-			193.8873444 3.6720590591
-			END IONS
-			*/
-			in.getline (line_buff, 120);
-			
-			if (strstr(line_buff,"BEGIN IONS") != NULL)
-			{
-				// new spectra
-			}
-			else if (strstr(line_buff,"TITLE") != NULL)
-			{
-				/* or extract spectra name */
-				spectra_name.assign(line_buff);
-			}
-			else if (strstr(line_buff, "PEPMASS") != NULL)
-			{
-				istringstream ss(line_buff);
-				ss >> precursor_mz;
-			}
-			else if (strstr(line_buff, "CHARGE") != NULL)
-			{
-				istringstream ss(line_buff);
-				ss >> charge;
-			}
-			else if (line_buff[0] >= '0' && line_buff[0] <= '9')
-			{
-				double mass_value;
-				double intensity;
-				/* read data */
-				istringstream ss(line_buff);
-				ss >> mass_value >> intensity;
-				//ss >> intensity;
-				peak peak_tmp(mass_value, intensity);
-
-				// num_peaks_tmp ++;
-				ions_tmp.push_back(peak_tmp);
-			}
-			else if (strstr(line_buff,"END IONS") != NULL)
-			{
-				/* collect all data and write back */
-				spectra spe_tmp(file_name_current, spectra_name, precursor_mz, charge, ions_tmp);
-				this->data.push_back(spe_tmp);
-				this->data_idxes.push_back(spectra_num);
-				spectra_num++;
-			}
-			else 
-				continue;
+			ions_tmp.clear();
 		}
-		in.close();
-	//}
-		this->data_size = this->data.size();
+		else if (strstr(line_buff,"TITLE") != NULL)
+		{
+			/* or extract spectra name */
+			spectra_name.assign(line_buff);
+		}
+		else if (strstr(line_buff, "PEPMASS") != NULL)
+		{
+			// istringstream ss(line_buff);
+			//ss >> precursor_mz;
+			double tmp;
+			sscanf(line_buff, "PEPMASS=%lf %lf", &precursor_mz, &tmp);
+		}
+		else if (strstr(line_buff, "CHARGE") != NULL)
+		{
+			// istringstream ss(line_buff);
+			//ss >> charge;
+			sscanf(line_buff, "CHARGE=%d+", &charge);
+		}
+		else if (line_buff[0] >= '0' && line_buff[0] <= '9')
+		{
+			double mass_value;
+			double intensity;
+			/* read data */
+			istringstream ss(line_buff);
+			ss >> mass_value >> intensity;
+			//ss >> intensity;
+			peak peak_tmp(mass_value, intensity);
+
+			// num_peaks_tmp ++;
+			ions_tmp.push_back(peak_tmp);
+		}
+		else if (strstr(line_buff,"END IONS") != NULL)
+		{
+			/* collect all data and write back */
+			spectra spe_tmp(file_name_current, spectra_name, precursor_mz, charge, ions_tmp);
+			this->data.push_back(spe_tmp);
+			this->data_idxes.push_back(spectra_num);
+			spectra_num++;
+		}
+		else 
+			continue;
+	}
+	in.close();
+	
+	this->data_size = this->data.size();
 	return;
 }
 
@@ -220,6 +223,7 @@ void ms_dataset::get_delta()
 				upslope_tmp = pmove->dest_node;
 			}
 		}
+		
 		this->delta.push_back( delta_tmp );
 		this->upslope.push_back( upslope_tmp );
 	}
@@ -250,7 +254,7 @@ void ms_dataset::decide_dpc(int method)
 			this->decision = decide_by_gap(this->delta, this->rho, this->cluster_num, this->data_size);
 		/* decide by multipler thresholds */
 		case 3:
-			this->decision = decide_multi_thres(this->delta, this->rho, this->cluster_num, this->data_size);
+			this->decision = decide_multi_thres(this->delta, this->rho, this->upslope, this->cluster_num, this->data_size);
 		/* decide by painting */
 		case 4:
 			this->decision = decide_by_graph(this->delta, this->rho, this->cluster_num, this->data_size);
@@ -288,5 +292,19 @@ void ms_dataset::assign_cluster()
 void ms_dataset::get_halo()
 {
 	// get_halo(this->decision, this->graph, this->rho, this->dc, this->cluster_num);
+	return;
+}
+
+void ms_dataset::filldata_by_idx(const ms_dataset& global_ds)
+{
+	assert(this->data_idxes.size() != 0 && this->data.size() == 0);
+
+	int count = this->data_idxes.size();
+	for (int i = 0; i < count; ++i)
+	{
+		int idx_tmp = this->data_idxes[i];
+		spectra spe_tmp(global_ds.data[idx_tmp]);
+		this->data.push_back(spe_tmp);
+	}
 	return;
 }

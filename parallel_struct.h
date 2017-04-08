@@ -36,6 +36,11 @@ struct dict_idx
 	// vector<spectra> data;
 	// or vector<ms_dataset> data_all;
 
+	dict_idx()
+	{
+
+	}
+	
 	dict_idx(int proc, vector<int> idxes)
 	{
 		num_proc = proc;
@@ -63,6 +68,23 @@ struct dict_full
 			idx_full.insert(idx_full.end(), multi_datasets[i].data_idxes.begin(), multi_datasets[i].data_idxes.end());
 			return;
 		}
+	}
+
+	void append_datasets(ms_dataset ds)
+	{
+		this->multi_datasets.push_back(ds);
+		return;
+	}
+
+	void fullfill_data(const ms_dataset& global_ds)
+	{
+		int count = this->multi_datasets.size();
+		for (int i = 0; i < count; ++i)
+		{
+			/* for every datasets, idxes are existed, while data is missing */
+			this->multi_datasets[i].filldata_by_idx(global_ds);
+		}
+		return;
 	}
 };
 

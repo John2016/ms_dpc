@@ -1,5 +1,9 @@
 #include <math.h>
+#include <iostream>
+#include <vector>
 #include "spectra.h"
+
+using namespace std;
 
 bool comp_inten(const peak & p1, const peak & p2)
 {
@@ -14,11 +18,22 @@ void spectra::append_peak(peak new_ion)
 
 void spectra::select_peaks()
 {
+	//cout << "\t\t in select_peaks. before select: " << this->ions.size();
+	// cout << "\t\t precursor_mz : " << this->precursor_mz;
 	int k = this->precursor_mz / 50;
 	sort(this->ions.begin(), this->ions.end(), comp_inten);
+	// cout << "\t\t in select_peaks. after sort: " << this->ions.size();
 	// sort(data_rho.begin(), data_rho.end(), comp_rho);
+	/*
 	int num_erase = this->ions.size() - k;
-	this->ions.erase(this->ions.end() - num_erase, this->ions.end());
+	for (int i = 0; i < num_erase; ++i)
+	{
+		this->ions.pop_back();
+	}
+	*/
+	this->ions.resize(k);
+	// this->ions.erase(this->ions.end() - num_erase, this->ions.end());
+	//cout << "\t\t in select_peaks. after select: " << this->ions.size();
 	return;
 }
 

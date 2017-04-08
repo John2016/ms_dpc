@@ -26,7 +26,7 @@ vector<int> decide_double_thres(vector<double> &delta, vector<double> &rho, int 
 
 vector<int> decide_by_gap(vector<double> &delta, vector<double> &rho, int &cluster_num, int n_sample);
 
-vector<int> decide_multi_thres(vector<double> &delta, vector<double> &rho, int &cluster_num, int n_sample);
+vector<int> decide_multi_thres(vector<double> &delta, vector<double> &rho, vector<int> &upslope, int &cluster_num, int n_sample);
 
 vector<int> decide_by_graph(vector<double> &delta, vector<double> &rho, int &cluster_num, int n_sample);
 

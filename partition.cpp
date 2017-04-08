@@ -113,17 +113,29 @@ heu_hashmap partition_heuristic(vector<spectra> dataset)
 // unordered_multimap<vector<int>, int> partition_heuristic(vector<spectra> dataset)
 // hash_multimap<vector<int>, int > partition_heuristic(vector<spectra> dataset)
 {
+	// cout << "in partition_heuristic" << endl;
+	// cout << "dataset size: " << dataset.size() << endl;
 	int group_num_heu = 4;			// top k  peaks to be selected
 
 	multimap<vector<int>, int > par_heu;
 	int count = dataset.size();
+	//cout << "count: " << count << endl;
 	for (int i = 0; i < count; ++i)
 	{
-		for (int j = 0; j < group_num_heu; ++j)
+		int cur_group = group_num_heu;
+		if (dataset[i].ions.size() < cur_group)
 		{
+			cur_group = dataset[i].ions.size();
+		}
+		// cout << i << " & " << cur_group << endl;
+		for (int j = 0; j < cur_group; ++j)
+		{
+			vector<int> hash_value = hash_func(i, j, dataset);
+			// cout << "hashed_value: " << hash_value[0] << " & " << hash_value[1] << endl;
 			par_heu.insert(make_pair(hash_func(i, j, dataset), i));
 		}
 	}
+	// cout << "heu_hashmap size: " << par_heu.size() << endl;
 	return par_heu;
 } 
 
@@ -183,6 +195,7 @@ vector<dict_idx> trans_table_dict(heu_hashmap merged_map)
 * 分配中保证负载均衡
 * 目前的方法就是随机分配，能在一定程度上保证负载均衡
 */
+// 目前这个函数未被使用
 void alloc_assign(vector<dict_idx> &idx_table, int num_proc_comp)
 {
 	/* to fullfill the dict_idx class, try balancing the load of every proc*/
@@ -195,7 +208,8 @@ void alloc_assign(vector<dict_idx> &idx_table, int num_proc_comp)
 	for (int i = 0; i < count; ++i)
 	{
 		idx_table[i].num_proc = i % num_proc_comp + 1;
-		global_datasize[idx_table[i].num_proc].push_back(idx_table[i].idx.size());
+		// 每一个节点上，每一组数据的大小，貌似现在不需要了
+		// global_datasize[idx_table[i].num_proc].push_back(idx_table[i].idx.size());
 	}
 
 	/* more effective method by optimization and planning */
@@ -211,25 +225,38 @@ void alloc_assign(vector<dict_idx> &idx_table, int num_proc_comp)
 /* allocate assigments, results as dict_full */
 vector<dict_full> alloc_assign_full(vector<dict_idx> idx_table, int num_proc_comp)
 {
+	// cout << "\t\tparas transfored into alloc_assign_full: " << idx_table.size() << " & " << num_proc_comp;
 	vector<dict_full> dict_full_vec;
 	for (int i = 0; i < num_proc_comp + 1; i++)
 	{
 		dict_full dict_tmp(i);
 		dict_full_vec.push_back(dict_tmp);
 	}
-
+	/* 关于此处的索引，分配任务有关的表都从0开始，便于数据发送，0地址的数据为空 */
+	// cout << "\t\tafter initialization, dict_full_vec size: " << dict_full_vec.size() << endl; 
 
 	// vector<vector<int> > global_datasize(num_proc_comp + 1, vector<int>());
 
 	int count = idx_table.size();
+	int proc_assign;
 	/* the simplest method, balance load by randomly distributed */
 	for (int i = 0; i < count; ++i)
 	{
-		int proc_assign = i % num_proc_comp + 1;
-		ms_dataset dset_tmp(idx_table[i].idx);
-		dict_full_vec[proc_assign].multi_datasets.push_back(dset_tmp);
+		proc_assign = i % num_proc_comp + 1;
+		// cout << "\t\texample " << i << ": " << proc_assign << endl;
+		// cout << "\t\t" << idx_table[i].idx.size() << endl;
+		// int proc_assign = idx_table[i].num_proc;
+		// ms_dataset dset_tmp(idx_table[i].idx);
+		// ms_dataset dset_tmp(idx_table[i].idx);
+		// cout << "\t\tafter ms_dataset, size of: " << dset_tmp.data_idxes.size() << endl;
+		// dict_full_vec[proc_assign].append_datasets(dset_tmp);
+		dict_full_vec[proc_assign].multi_datasets.push_back(idx_table[i].idx);
+		// cout << "\t\t" << dict_full_vec[1].multi_datasets.size() << endl;
+		// delete dset_tmp;
 	}
+	// cout << "\t\tbefore function return\n";
 	return dict_full_vec;
 }
+
 
 
