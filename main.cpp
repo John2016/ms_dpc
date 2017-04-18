@@ -263,7 +263,7 @@ int main(int argc, char** argv)
 
 		hhm_ms = partition_heuristic(global_ms.data);
 
-		cout << "hash table analysis done!\n";
+		// cout << "hash table analysis done!\n";
 		cout << "hash table size: " << hhm_ms.size() << endl;
 		/*
 		for (int i = 0; i < m_groups; ++i)
@@ -276,9 +276,15 @@ int main(int argc, char** argv)
 
 		// allocate assignments
 		vector<dict_idx> assign_distri = trans_table_dict(hhm_ms);
-		// cout << "after trans_table_dict, assign_distri size: " << assign_distri.size() << endl;
+		cout << "after trans_table_dict, size of unique hash-table key: " << assign_distri.size() << endl;
 		ms_assign = alloc_assign_full(assign_distri, num_procs - 1);
 		// cout << "after alloc_assign_full, ms_assign size: " << ms_assign.size() << endl;
+		cout << "size of datasets assigned to every node: \n\t" ;
+		for (int i = 0; i < ms_assign.size(); ++i)
+		{
+			cout << ms_assign[i].multi_datasets.size() << ", ";
+		}
+		cout << endl;
 		// cout << "data size of every node: " << ms_assign[0].multi_datasets.size() << " & " << ms_assign[1].multi_datasets.size() << endl;
 
 		/* 注意，这一步结束后，数据尚未填充 */

@@ -31,7 +31,10 @@ void spectra::select_peaks()
 		this->ions.pop_back();
 	}
 	*/
-	this->ions.resize(k);
+	if (k < this->ions.size())
+	{
+		this->ions.resize(k);
+	}
 	// this->ions.erase(this->ions.end() - num_erase, this->ions.end());
 	//cout << "\t\t in select_peaks. after select: " << this->ions.size();
 	return;
