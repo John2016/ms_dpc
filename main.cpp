@@ -317,7 +317,10 @@ int main(int argc, char** argv)
 				cout << int(assign_str.at(j)) << " & " ;
 			}
 			*/
-			MPI_Send(assign_str.c_str(), assign_str.size(), MPI_CHAR, i, i, MPI_COMM_WORLD);
+			/* 0418 修改，因为server上报错 */
+			char * cstr = new char [assign_str.length() + 1];
+			strcpy(cstr, assign_str.c_str());
+			MPI_Send(cstr, assign_str.size(), MPI_CHAR, i, i, MPI_COMM_WORLD);
 			// cout << "after send" << endl;
 			// MPI_Send(ms_assign[i].multi_datasets, 1, i, i, MPI_COMM_WORLD);
 			/* ÕâÀï£¬ms_assign[i]°üº¬Ò»¸öms_datasetÊý×éºÍÒ»¸öÍêÕûµÄË÷ÒýÏòÁ¿£¬µ«Ä¿Ç°ms_dataset½ö°üº¬Ë÷ÒýÃ»ÓÐÊý¾Ý */
@@ -470,7 +473,7 @@ int main(int argc, char** argv)
 		cout << "Time of delta calculation and merging on master node is: " << time_after_delta - time_before_delta << "s" << endl;
 
 		MPI_Bcast(delta_final.data(), nsample_global, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		MPI_Bcast(upslope_final.data(), nsample_global, MPI_INT, 0, MPI_COMM_WORLD);
+		// MPI_Bcast(upslope_final.data(), nsample_global, MPI_INT, 0, MPI_COMM_WORLD);
 		
 		global_ms.assign_delta(delta_final, upslope_final);
 	}
@@ -513,7 +516,10 @@ int main(int argc, char** argv)
 		// decide and assign 
 		/* making decison */
 		double time_before_cluster = MPI_Wtime();
+		// cout << "before decide dpc, rho & delta & decison size are: " << endl;
+		// cout << global_ms.rho.size() << " " << global_ms.delta.size() << " " << global_ms.decision.size() << endl; 
 		global_ms.decide_dpc(3);		// multipler of rho and delta
+		// cout << "after decide dpc" << endl;
 		global_ms.assign_cluster();
 		double time_after_cluster = MPI_Wtime();
 		cout << "Time of making decision and assigning labels is: " << time_after_cluster - time_before_cluster << "s" << endl;
@@ -543,6 +549,9 @@ int main(int argc, char** argv)
 			}
 			out.close();
 		}
+
+		double end_time = MPI_Wtime();
+		cout << "All time cost: " << end_time - start_time << "s" << endl;
 	}
 	
 	MPI_Finalize();
