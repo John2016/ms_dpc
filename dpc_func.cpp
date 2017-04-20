@@ -183,12 +183,15 @@ void normalize_paras(vector<double> &delta, vector<double> &rho, int n_sample)
 	double rho_range = max_rho - min_rho;
 	double delta_range = max_delta - min_delta;
 
-	for(int i = 0; i < n_sample; i++)
-	{
-		delta[i] = (delta[i] - min_delta) / delta_range + min_delta;
-		rho[i] = (rho[i] - min_rho) / rho_range + min_rho;
+    if(rho_range != 0 && delta_range != 0)
+    {
+    	for(int i = 0; i < n_sample; i++)
+    	{
+    		delta[i] = (delta[i] - min_delta) / delta_range + min_delta;
+    		rho[i] = (rho[i] - min_rho) / rho_range + min_rho;
+    	}
 	}
-	return;
+    return;
 }
 
 
@@ -271,7 +274,8 @@ vector<int> decide_multi_thres(vector<double> &delta, vector<double> &rho, vecto
     }
 
     cluster_num = counter;
-    cout<<"number of clusters: "<< cluster_num << endl;
+    cout << "paras in decision, mean & std & thres of gamma: " << mean_gamma << " & " << std_gamma << " & " << thres_gamma << endl;
+    cout << "number of clusters: "<< cluster_num << endl;
 
     return decision;
 }

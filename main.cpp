@@ -386,6 +386,7 @@ int main(int argc, char** argv)
 		/* ÀíÂÛÉÏ£¬Ã¿Ò»¸öÊý¾ÝµãµÄrhoÖµ¶¼»á³öÏÖk´Î£¬kÊÇÑ¡¶¨µÄ×î¸ßµÄ¼¸¸ö·åµÄ¸öÊý */
 		/* ÆäÊµÕâ¸öÒ²Í¬ÑùÊÊºÏm_group£¬ÒòÎªÎÒÃÇµÄ²Ù×÷Ö»ÊÇÒªÇó×î´óÖµ£¬ÊÇ·ñ¶ÔÆë²»ÖØÒª */
 		// vector<double> rho_final(nsample_global, 0.0);
+	 
 		double time_before_rho = MPI_Wtime();
 		for (int i = 1; i < num_procs; ++i)
 		{
@@ -414,6 +415,8 @@ int main(int argc, char** argv)
 				*/
 			}
 		}
+		
+		cout << endl;
 		double time_after_rho = MPI_Wtime();
 		cout << "Time of rho collection and merging on master proc is: " << time_after_rho - time_before_rho << "s" << endl;
 		// cout << "max rho: " << rho_final.size() << endl;
@@ -437,10 +440,11 @@ int main(int argc, char** argv)
 		// we should add this rho_final to the class
 		MPI_Bcast(rho_final.data(), nsample_global, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		global_ms.assign_rho(rho_final);
+		
 	}
 	
 	/* delta calculation */
-	vector<double> delta_final(nsample_global, 2);			// global maximum value should be assigned
+	vector<double> delta_final(nsample_global, 1);			// global maximum value should be assigned
 	vector<int> upslope_final(nsample_global, -1);
 	if (myid == 0)
 	{
@@ -518,9 +522,12 @@ int main(int argc, char** argv)
 		double time_before_cluster = MPI_Wtime();
 		// cout << "before decide dpc, rho & delta & decison size are: " << endl;
 		// cout << global_ms.rho.size() << " " << global_ms.delta.size() << " " << global_ms.decision.size() << endl; 
+	 
 		global_ms.decide_dpc(3);		// multipler of rho and delta
 		// cout << "after decide dpc" << endl;
+		 
 		global_ms.assign_cluster();
+		 
 		double time_after_cluster = MPI_Wtime();
 		cout << "Time of making decision and assigning labels is: " << time_after_cluster - time_before_cluster << "s" << endl;
 		
@@ -541,15 +548,15 @@ int main(int argc, char** argv)
 		ofstream out(OUTPUT_NAME);
 		if(out.is_open()){
 			cout<<"Prepare to write the result ... ... "<<endl;
-			out << "file_name,spectra_name,cluster,rho,delta" << endl;
+			out << "file_name;spectra_name;cluster;rho;delta" << endl;
 			for (int i = 0; i < global_ms.data.size()	; ++i)
 			{
 				// out<< i << endl;
-				out << global_ms.data[i].file_name << "," << global_ms.data[i].spectra_name << "," << global_ms.decision[i] << rho_final[i] << delta_final[i] << endl;
+				out << global_ms.data[i].file_name << ";" << global_ms.data[i].spectra_name;
+				out << ";" << global_ms.decision[i] << ";" << global_ms.rho[i] << ";" << global_ms.delta[i] << endl;
 			}
 			out.close();
 		}
-
 		double end_time = MPI_Wtime();
 		cout << "All time cost: " << end_time - start_time << "s" << endl;
 	}
