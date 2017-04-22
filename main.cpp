@@ -179,8 +179,11 @@ int main(int argc, char** argv)
 	}
 	nsample_global = global_ms.data_size;
 	double after_loading_time = MPI_Wtime();
-	cout << "proc " << myid << ": Time of loading data: " << after_loading_time - before_loading_time << "s" << endl;
-	cout << "proc " << myid << ": Total number of data: " << nsample_global << endl;
+	if(myid == 0)
+	{
+		cout << "proc " << myid << ": Time of loading data: " << after_loading_time - before_loading_time << "s" << endl;
+		cout << "proc " << myid << ": Total number of data: " << nsample_global << endl;
+	}
 
 	for (int i = 0; i < global_ms.data_size; i++)
 	{
@@ -188,7 +191,10 @@ int main(int argc, char** argv)
 		global_ms.data[i].normalize_spectra();
 	}
 	double after_preprocess_time = MPI_Wtime();
-	cout <<  "proc " << myid << ": Time of data preprocessing: " << after_preprocess_time - after_loading_time << "s" << endl;
+	if(myid == 0)
+	{
+		cout <<  "proc " << myid << ": Time of data preprocessing: " << after_preprocess_time - after_loading_time << "s" << endl;
+	}
 	if (myid == 0)
 	 {
 	 	/*
