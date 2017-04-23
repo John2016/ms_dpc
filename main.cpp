@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 	/* dc estimation should be put here, maybe parallely */
 	// dc = getdc_reservoir(vector< > &data)
 	// MPI_Bcast(&dc, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	double dc = 0.1;		// hand defined
+	double dc = 1.0;		// hand defined
 
 	/* key variables */
 	// vector<hash_table> ms_complete_ht;
@@ -548,7 +548,7 @@ int main(int argc, char** argv)
 		strcat(OUTPUT_NAME, input_dir);
 		strcat(OUTPUT_NAME, ".csv");
 		cout << "out file name: " << OUTPUT_NAME << endl;
-		cout << "n_sample: " << nsample_global << endl;
+		// cout << "n_sample: " << nsample_global << endl;
 		// cout << "data_names size: " << data_names.size() << " data_names sample: " << data_names[0] << endl;
 		// cout << "decision size: " << decision.size() << " decision sample: " << decision[0] << endl;
 		ofstream out(OUTPUT_NAME);
