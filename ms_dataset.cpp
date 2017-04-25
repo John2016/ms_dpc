@@ -130,6 +130,7 @@ void ms_dataset::append_data(spectra single_data, int single_idx)
 
 void ms_dataset::generate_graph(int method)
 {
+	cout << "in generate_graph" << endl;
 	for (int i = 0; i < data_size; ++i)
 	{
 		ms_graph.insert_vertex(i);
@@ -140,8 +141,10 @@ void ms_dataset::generate_graph(int method)
 		for (int j = i + 1; j < data_size; ++j)
 		{
 			double dis_tmp = get_point_dis(this->data[i], this->data[j], method);
+			// 第一个阈值
 			if (dis_tmp > 0.001)
 			{
+				cout << "distance larger than 0.0001" << endl;
 				ms_graph.insert_edge(i, j, dis_tmp);
 				ms_graph.insert_edge(j, i, dis_tmp);
 			}

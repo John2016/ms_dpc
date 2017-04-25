@@ -16,6 +16,7 @@
 /*
  * last modified: 20170408
 */
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -33,7 +34,7 @@
 #include <map>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
-// #include <unordered_map>
+// #include <unordered_map>\
 
 #include "mpi.h"
 
@@ -177,6 +178,15 @@ int main(int argc, char** argv)
 		}
 		*/
 	}
+
+	/*
+	#ifdef MPI_DEBUG
+	int gdb_break = 1;
+	while(gdb_break) {};
+	//if(gdb_break) {sleep(30);}
+	#endif
+	*/
+
 	nsample_global = global_ms.data_size;
 	double after_loading_time = MPI_Wtime();
 	if(myid == 0)
@@ -283,6 +293,19 @@ int main(int argc, char** argv)
 		// allocate assignments
 		vector<dict_idx> assign_distri = trans_table_dict(hhm_ms);
 		cout << "after trans_table_dict, size of unique hash-table key: " << assign_distri.size() << endl;
+		/* 0425 write the hash table into file, according to syntax as key1 - key2 - table_size */
+		char OUT_HT[64] = "hash_table_test.csv";
+		ofstream out(OUT_HT);
+		if(out.is_open()){
+			out << "precursor value * 0.33,mz value * 2, size of hash table" << endl;
+			for (int i = 0; i < assign_distri.size(); ++i)
+			{
+				out << assign_distri[i].hash_key[0] << "," << assign_distri[i].hash_key[1] << "," << assign_distri[i].idx.size() << endl;
+			}
+			out.close();
+		}
+
+
 		ms_assign = alloc_assign_full(assign_distri, num_procs - 1);
 		// cout << "after alloc_assign_full, ms_assign size: " << ms_assign.size() << endl;
 		cout << "size of datasets assigned to every node: \n\t" ;
@@ -369,6 +392,7 @@ int main(int argc, char** argv)
 		vector<double> rho_sendback;
 		for (int i = 0; i < data_local.size(); ++i)
 		{
+			cout << "before graph, parameters: " << data_local[i].data.size() << endl;
 			data_local[i].generate_graph(5);		// dot
 			data_local[i].get_rho(dc, true);		// dc and is_guass
 

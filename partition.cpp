@@ -95,7 +95,7 @@ global_ms_ht merge_multig_ht(global_ms_ht ht_ori, global_ms_ht ht_new)
  */
 
 /* the hash function */
-vector<int> hash_func(int idx, int num_group, vector<spectra> &dataset)			// 这里的num_group是广义的意思，此处为选第几高的峰
+vector<int> hash_func(int idx, int num_group, vector<spectra> &dataset)			// 这里的num_group是广义的意思，目前的实际含义为选第num_group高的峰
 {
 	double tolerance_pre = 3;
 	double tolerance_peak = 0.5;
@@ -117,7 +117,8 @@ heu_hashmap partition_heuristic(vector<spectra> dataset)
 	// cout << "dataset size: " << dataset.size() << endl;
 	int group_num_heu = 4;			// top k  peaks to be selected
 
-	multimap<vector<int>, int > par_heu;
+	// multimap<vector<int>, int > par_heu;
+	heu_hashmap par_heu;
 	int count = dataset.size();
 	//cout << "count: " << count << endl;
 	for (int i = 0; i < count; ++i)
@@ -185,7 +186,7 @@ vector<dict_idx> trans_table_dict(heu_hashmap merged_map)
 		}
 		// 这里，只需要确定end_curr的值等于下一个key的beg_curr就正确
 		// 实验表明，上述假设正确，upper_bound等于下一个元素的lower_bound
-		dict_idx dict_tmp(-1, idx_tmp);
+		dict_idx dict_tmp(-1, key_curr, idx_tmp);
 		idx_table.push_back(dict_tmp);
 	}
 	return idx_table;

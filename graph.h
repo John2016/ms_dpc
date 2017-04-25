@@ -150,11 +150,19 @@ bool graph<node_type, dist_type>::insert_edge(int v1, int v2, dist_type weight)
 		{
 			while(pmove->next_edge)
 			{
+				/* 当v2已经存在，出现在前四个峰有一个以上重合的情况下 */
+				if (pmove->dest_node == v2)
+				{
+					break;
+				}
 				pmove = pmove->next_edge;
 			}
-			pmove->next_edge = new edge<dist_type>(v2,weight);
-			num_edges++;
-			return true;
+			if (! pmove->next_edge)
+			{
+				pmove->next_edge = new edge<dist_type>(v2,weight);
+				num_edges++;
+				return true;
+			}	
 		}
 	}
 	return true;

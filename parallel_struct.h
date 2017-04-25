@@ -27,9 +27,12 @@ struct alloc_info
 };
 */
 
+/* 哈希key为索引的字典 */
 struct dict_idx
 {
 	int num_proc;
+	// 标识记录哈希码，这里是两位vector，建议用template替换
+	vector<int> hash_key;
 	int para_1;		// group_num
 	vector<int> idx;
 	ms_dataset data();
@@ -41,9 +44,10 @@ struct dict_idx
 
 	}
 	
-	dict_idx(int proc, vector<int> idxes)
+	dict_idx(int proc, vector<int> keys, vector<int> idxes)
 	{
 		num_proc = proc;
+		hash_key = keys;
 		idx = idxes;
 	}
 };

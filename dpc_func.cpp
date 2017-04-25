@@ -38,8 +38,15 @@ double get_point_dis(spectra pt1, spectra pt2, int method)
 	return 0.0;
 }
 
+/* 
+ * 基于点积方法计算质谱相似性
+ * 更新：2017.4.25
+ * 原方法可能导致所有距离都为0，故此处修正算法
+ * 在每个partition内，最高的四个峰至少有一个是重复的，因此方法正确的话，每个点都应该有很多歌邻接点
+ */
 double get_pdis_dotp(spectra &pt1, spectra &pt2)
 {
+    // cout << "in pdis calculation, size of the two data: " << pt1.ions.size() << " & " << pt2.ions.size() << endl;
     // both points should be filtered and normalized
     double tolerance = 0.5;
     vector<double> union_vec;
@@ -59,12 +66,14 @@ double get_pdis_dotp(spectra &pt1, spectra &pt2)
     for (int i = 0; i < count_2; ++i)
     {
 		int j;
+        /* 这里的比较过程还可以利用mz values的有序性来降低时间复杂度 */
         for (j = 0; j < count_1; ++j)
         {
             if (fabs(pt2.ions[i].mass_value - pt1.ions[j].mass_value) <= 0.5)
             {
                 union_pt2[j] = pt2.ions[i].intensity;
-                continue;
+                break;
+                // continue;
             }
             else
                 continue;
@@ -97,7 +106,7 @@ double get_pdis_dotp(spectra &pt1, spectra &pt2)
     dot_product = dot_product / (vec_size[0] * vec_size[1]);
 
 	/* it should be note that distance rather than similarity should be returned */
-    return 1 - dot_product;
+    return 1.0 - dot_product;
 }
 
 
