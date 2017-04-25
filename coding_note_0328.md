@@ -253,3 +253,8 @@
 2. 调整代码，一次性加载整个数据文件来提升效率
 3. 调整代码，使得单个节点能够处理更多的数据文件，或将多个节点用来发送数据
 4. 需要注意的是，PRIDE2迭代式聚类，最终未给出similarity threshold，这个算是他们的实验结果，不是预先设定的；另外值得注意的是，窗口的大小也是随着聚类过程不断扩大的，这也体现了tolerance的增加，从0.2增加到4（这里是指precursor？）。这里给出一个方案：调高dc，看看结果，之前的dc太低了
+
+## coding note 0425
+1. 将哈希表写入文件，包括precursor， top mz，size
+2. 注意，hashed table unique只与mz值得global范围有关，大致为<br>(precursor_range/pre_tolerance)*(mzvalue_rangez/mz_talerance)<br>这也只是一个理论情况，可以认为是上限，数据的增多应该主要影响precursor_range的数量
+3. 经过计算，哪怕仅有一个峰匹配，那两个spectra的相似度也会大于0.03
