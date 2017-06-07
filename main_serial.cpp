@@ -95,61 +95,42 @@ int main(int argc, char** argv)
 		ms_assign[i].fullfill_data(global_ms);
 		ms_assign[i].generate_idxf();
 	}
-	double after_assign_time = MPI_Wtime();
 	cout << "Time of assignment planing: " << after_assign_time - after_preprocess_time << "s" << endl;
 
 	/* encode, send, recieve, decode */
+	/*
+	 * try to generate data_local
+	 */
+
+	/* get rho */
 	vector<ms_dataset> data_local;
 	vector<double> rho_final(nsample_global, 0.0);
-	cout << "proc " << myid << " has collected all data assigned to it! " << endl;
-	// cout << "proc 1 verify: " << data_local.size() << " & " << data_local[0].data.size() << " & " << data_local[0].data[0].ions.size() << endl;
-	double time_after_receive = MPI_Wtime();
-	cout << "Time of data receiving on proc " << myid << " is " << time_after_receive - time_before_receive << "s" << endl;
-
-	// vector<report_rho> rho_sendback;
-	/* ÓÉÓÚ¶¨ÒåÁËdict_fullÕâ¸ö¸´ÔÓÀà£¬ÕâÀï¿ÉÒÔÖ±½Ó»Ø´«vector */
-	vector<double> rho_sendback;
+	// vector<double> rho_sendback;
 	for (int i = 0; i < data_local.size(); ++i)
 	{
 		// cout << "before graph, parameters: " << data_local[i].data.size() << endl;
 		data_local[i].generate_graph(5);		// dot
 		data_local[i].get_rho(dc, true);		// dc and is_guass
 
-		rho_sendback.reserve(rho_sendback.size() + data_local[i].rho.size());
-		rho_sendback.insert(rho_sendback.end(), data_local[i].rho.begin(), data_local[i].rho.end());
-	}
-
-	for (int j = 0; j < sendback_length; ++j)
-	{
-		if (rho_tmp[j] > rho_final[idx_tmp[j]])
-		{
-			// cout << "larger rho, " << j << endl;
-			rho_final[idx_tmp[j]] = rho_tmp[j];
-		}
+		// rho_sendback.reserve(rho_sendback.size() + data_local[i].rho.size());
+		// rho_sendback.insert(rho_sendback.end(), data_local[i].rho.begin(), data_local[i].rho.end());
 	}
 
 	/* delta */
-	vector<double> delta_sendback;
-	vector<int> upslope_sendback;
+	// vector<double> delta_sendback;
+	// vector<int> upslope_sendback;
 	for (int i = 0; i < data_local.size(); ++i)
 	{
-		/* code */
-		/* change the local rho value based on rho_final */
-		data_local[i].refine_rho(rho_final);
+		// data_local[i].refine_rho(rho_final);
 		data_local[i].get_delta();
 
-		// report_delta delta_tmp;
-		// fullfill it
-
-		// rho_sendback.push_back(delta_tmp);
-		delta_sendback.insert(delta_sendback.end(), data_local[i].delta.begin(), data_local[i].delta.end());
-		upslope_sendback.insert(upslope_sendback.end(), data_local[i].upslope.begin(), data_local[i].upslope.end());
+		// delta_sendback.insert(delta_sendback.end(), data_local[i].delta.begin(), data_local[i].delta.end());
+		// upslope_sendback.insert(upslope_sendback.end(), data_local[i].upslope.begin(), data_local[i].upslope.end());
 	}
 
 	vector<double> delta_final(nsample_global, 1);			// global maximum value should be assigned
 	vector<int> upslope_final(nsample_global, -1);
 
-	double time_before_delta = MPI_Wtime();
 	for (int i = 1; i < num_procs; ++i)
 	{
 		vector<int> idx_tmp = ms_assign[i].idx_full;
