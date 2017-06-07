@@ -217,7 +217,7 @@ int main(int argc, char** argv)
 		cout << "\t\tions[2]" << global_ms.data[0].ions[2].mass_value << endl;
 		cout << "\t\tions[2]" << global_ms.data[0].ions[2].intensity << endl;
 	 	*/
-	 } 
+	} 
 
 	MPI_Bcast(&nsample_global, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	// cout << "bcast done!" << endl;
@@ -392,7 +392,7 @@ int main(int argc, char** argv)
 		vector<double> rho_sendback;
 		for (int i = 0; i < data_local.size(); ++i)
 		{
-			cout << "before graph, parameters: " << data_local[i].data.size() << endl;
+			// cout << "before graph, parameters: " << data_local[i].data.size() << endl;
 			data_local[i].generate_graph(5);		// dot
 			data_local[i].get_rho(dc, true);		// dc and is_guass
 

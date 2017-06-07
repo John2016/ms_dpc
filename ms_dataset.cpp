@@ -130,7 +130,7 @@ void ms_dataset::append_data(spectra single_data, int single_idx)
 
 void ms_dataset::generate_graph(int method)
 {
-	cout << "in generate_graph" << endl;
+	// cout << "in generate_graph" << endl;
 	for (int i = 0; i < data_size; ++i)
 	{
 		ms_graph.insert_vertex(i);
